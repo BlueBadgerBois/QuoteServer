@@ -5,10 +5,10 @@ import (
     "net"
     "os"
     "strings"
-    "encoding/json"
     "math/rand"
     "time"
     "bytes"
+    "strconv"
 )
 
 const (
@@ -25,7 +25,7 @@ type StockResponse struct {
   Cryptokey string  `json:"cryptokey"`
 }
 
-func getStockResponse(buf []byte) []byte {
+func getStockResponse(buf []byte) string {
   s := string(bytes.Trim(buf, "\x00"))
   sp := strings.Split(s, ",")
   // for now assume we will never get malformed inputs and this limited error check and crashing is ok
@@ -34,16 +34,13 @@ func getStockResponse(buf []byte) []byte {
     os.Exit(1)
   }
 
-  quoteRes := StockResponse {
-    Quote:  rand.Float64(),
-    Symbol: sp[0],
-    UserID: sp[1],
-    Timestamp: time.Now().String(),
-    Cryptokey: "abc",
-  }
-  jsonRes, _ := json.Marshal(quoteRes)
+  var quoteRes string = strconv.Itoa(rand.Intn(999)) + "." + strconv.Itoa(rand.Intn(99)) +	//Quote
+  	", " + sp[0] +	//Symbol
+  	", " + sp[1] +	//UserID
+  	", " + time.Now().String() + //Timestamp
+  	", abc"	//CryptoKey
 
-  return jsonRes
+  return quoteRes
 }
 
 // Handles incoming requests.
@@ -56,8 +53,9 @@ func handleRequest(conn net.Conn) {
 
   stockResponse := getStockResponse(buf)
 
+
   // Send a response back to person contacting us.
-  conn.Write(stockResponse)
+  conn.Write([]byte(stockResponse))
   conn.Close()
 }
 
